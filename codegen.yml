@@ -1,0 +1,11 @@
+overwrite: true
+schema: './apollo/typedefs.ts'
+# documents: 'components/**/*.graphql'
+generates:
+  ./apollo/types.d.ts:
+    plugins:
+      - 'typescript'
+      - 'typescript-operations'
+      - 'typescript-react-apollo'
+      - 'typescript-document-nodes'
+      - 'fragment-matcher'

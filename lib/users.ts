@@ -1,6 +1,10 @@
 import pool from './db';
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
+import config from './util/config';
+import redisClient, { getAsync } from './redis';
+import jwt from 'jsonwebtoken';
+import { NextApiRequest } from 'next';
 
 const SALT_ROUNDS = 3;
 
@@ -9,7 +13,7 @@ export async function getAllUsers() {
   const result = await pool.query(
     'SELECT id, username, description from users ORDER BY id ASC'
   );
-  console.log('result:', result);
+
   return result.rows;
 }
 
@@ -41,26 +45,45 @@ export async function createUser({ username, password }: UserInput) {
   return newUserQuery.rows[0];
 }
 
-export async function login({ username, password }: UserInput) {
-  console.log('password:', password);
+export async function login({
+  username,
+  password,
+}: UserInput): Promise<LoginDetails> {
   const queryResult = await pool.query(
-    `SELECT password from users WHERE username='${username}'`
+    `SELECT id, password from users WHERE username='${username}'`
   );
 
-  console.log('queryResult:', queryResult.rows);
   if (queryResult.rows.length === 0) {
     throw new Error('WRONG_CREDENTIALS');
   }
 
   const user = queryResult.rows[0];
-  console.log('user:', user);
 
   const result = await bcrypt.compare(password, user.password);
   if (!result) {
     throw new Error('WRONG_CREDENTIALS');
   }
 
-  return true;
+  const authToken = jwt.sign(
+    {
+      id: user.id,
+      username,
+    },
+    config.authSecret,
+    { expiresIn: '15s' }
+  );
+  const refreshToken = jwt.sign(
+    {
+      id: user.id,
+      username,
+    },
+    config.refreshSecret
+  );
+  redisClient.set(user.id, refreshToken);
+  return {
+    authToken,
+    refreshToken,
+  };
 }
 
 export async function deleteUser(userId: string) {
@@ -79,13 +102,11 @@ export async function changePassword({
     `SELECT id, password from users WHERE id='${userId}'`
   );
 
-  console.log('queryResult:', queryResult.rows);
   if (queryResult.rows.length === 0) {
     throw new Error('WRONG_CREDENTIALS');
   }
 
   const user = queryResult.rows[0];
-  console.log('user:', user);
 
   const result = await bcrypt.compare(oldPassword, user.password);
   if (!result) {
@@ -100,6 +121,36 @@ export async function changePassword({
   return true && updateQueryResult.rowCount;
 }
 
+export async function getNewAuthToken(req: NextApiRequest) {
+  const token = req.headers.authorization?.split(' ')[1];
+  console.log('token:', token);
+  if (!token) {
+    throw new Error('UNAUTHORIZED');
+  }
+  try {
+    const user = jwt.verify(token, config.refreshSecret);
+    console.log('user:', user);
+    if (!user || !user.id) {
+      throw new Error('UNAUTHORIZED');
+    }
+    const foundRefreshToken = await getAsync(user.id);
+    console.log('foundRefreshToken:', foundRefreshToken);
+
+    if (token !== foundRefreshToken) {
+      throw new Error('UNAUTHORIZED');
+    }
+
+    return jwt.sign(
+      { id: user.id, username: user.username },
+      config.authSecret,
+      { expiresIn: '15s' }
+    );
+  } catch (e) {
+    console.log('e:', e);
+    throw new Error('UNAUTHORIZED');
+  }
+}
+
 interface ChangePasswordInput {
   userId: string;
   oldPassword: string;
@@ -109,4 +160,9 @@ interface ChangePasswordInput {
 interface UserInput {
   username: string;
   password: string;
+}
+
+interface LoginDetails {
+  authToken: string;
+  refreshToken: string;
 }

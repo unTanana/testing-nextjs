@@ -1,8 +1,13 @@
 import { ApolloServer } from 'apollo-server-micro';
-import { typeDefs } from '../../apollo/typedefs';
-import { resolvers } from '../../apollo/resolvers';
+import { schema } from '../../apollo/schema';
+import { getSession } from '../../lib/auth';
 
-const server = new ApolloServer({ typeDefs, resolvers });
+const server = new ApolloServer({
+  schema,
+  context(ctx) {
+    return { ...ctx, user: getSession(ctx.req) };
+  },
+});
 
 const handler = server.createHandler({ path: '/api/graphql' });
 

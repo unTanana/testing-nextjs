@@ -9,12 +9,18 @@ import {
   login,
   deleteUser,
   changePassword,
+  getNewAuthToken,
 } from '../lib/users';
 
 export const resolvers = {
   Query: {
     book: () => book,
-    users: getAllUsers,
+    users: (_root, _args, context) => {
+      if (!context.user) {
+        throw new Error('UNAUTHORIZED');
+      }
+      return getAllUsers();
+    },
   },
 
   Mutation: {
@@ -44,6 +50,9 @@ export const resolvers = {
         oldPassword: args.oldPassword,
         newPassword: args.newPassword,
       });
+    },
+    refreshToken: (_root, _args, context) => {
+      return getNewAuthToken(context.req);
     },
   },
 };
