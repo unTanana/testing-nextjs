@@ -29,7 +29,7 @@ const Book: FC = () => {
     return <div>error</div>;
   }
 
-  const updateCache = (cache, store) => {
+  const updateCache = (cache: any, store: any) => {
     console.log('store:', store);
     const existingBook = cache.readQuery({
       query: GET_BOOK_DETAILS,
@@ -44,7 +44,6 @@ const Book: FC = () => {
 
   const [updateBook] = useMutation(UPDATE_BOOK, { update: updateCache });
   const updateBookHandler = () => {
-    console.log('blabla');
     updateBook({
       variables: { name: 'A Spicy Sausage', author: 'Anton the Butcher' },
     });

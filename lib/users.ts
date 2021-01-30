@@ -70,7 +70,7 @@ export async function login({
       username,
     },
     config.authSecret,
-    { expiresIn: '15s' }
+    { expiresIn: '30m' }
   );
   const refreshToken = jwt.sign(
     {
@@ -122,20 +122,23 @@ export async function changePassword({
 }
 
 export async function getNewAuthToken(req: NextApiRequest) {
+  // refresh token is to be passed here
   const token = req.headers.authorization?.split(' ')[1];
-  console.log('token:', token);
   if (!token) {
     throw new Error('UNAUTHORIZED');
   }
   try {
+    // check if it's valid
     const user = jwt.verify(token, config.refreshSecret);
     console.log('user:', user);
     if (!user || !user.id) {
       throw new Error('UNAUTHORIZED');
     }
+    // check if it's stored in redis for that user
     const foundRefreshToken = await getAsync(user.id);
     console.log('foundRefreshToken:', foundRefreshToken);
 
+    // tokens should match
     if (token !== foundRefreshToken) {
       throw new Error('UNAUTHORIZED');
     }
@@ -143,7 +146,7 @@ export async function getNewAuthToken(req: NextApiRequest) {
     return jwt.sign(
       { id: user.id, username: user.username },
       config.authSecret,
-      { expiresIn: '15s' }
+      { expiresIn: '30m' }
     );
   } catch (e) {
     console.log('e:', e);

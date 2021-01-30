@@ -1,4 +1,4 @@
-1. Generate types from schema
+1. Generate types from schema 1
 2. Setup login / register on client
 3. Setup refreshing from client
 4. Setup nginx load balancing and check refreshing 

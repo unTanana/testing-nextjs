@@ -7,6 +7,7 @@ export const getSession = (request: NextApiRequest) => {
   const token = authHeader?.split(' ')[1];
   if (token) {
     try {
+      // returns decoded string
       return jwt.verify(token, config.authSecret);
     } catch (e) {
       return null;
