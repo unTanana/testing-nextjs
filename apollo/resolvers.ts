@@ -4,6 +4,7 @@ import {
   login,
   deleteUser,
   changePassword,
+  signOut,
 } from '../lib/users';
 
 export const resolvers = {
@@ -50,6 +51,12 @@ export const resolvers = {
         oldPassword: args.oldPassword,
         newPassword: args.newPassword,
       });
+    },
+    signOut: (root, args, context) => {
+      if (!context.user) {
+        throw new Error('UNAUTHORIZED');
+      }
+      return signOut(context.res);
     },
   },
 };

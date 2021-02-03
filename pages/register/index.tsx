@@ -2,7 +2,8 @@ import { useFormik } from 'formik';
 import { useMutation } from '@apollo/client';
 import { validationSchema } from './validation';
 import { REGISTER } from './mutations';
-import { Input } from '../../components/form';
+import { Input } from '../../components/common/form';
+import Link from 'next/link';
 
 const initialFormValues = {
   username: '',
@@ -56,6 +57,14 @@ export default function Register() {
           >
             Submit
           </button>
+        </div>
+
+        <div className="pt-4">
+          Already have an account? Please
+          <Link href="/login">
+            <a> login </a>
+          </Link>{' '}
+          :)
         </div>
       </form>
     </main>

@@ -13,6 +13,7 @@ export const typeDefs = gql`
       oldPassword: String!
       newPassword: String!
     ): Boolean
+    signOut: Boolean!
   }
 
   type User {

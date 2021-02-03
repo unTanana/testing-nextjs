@@ -9,7 +9,7 @@ import {
   MutationLoginArgs,
   MutationChangePasswordArgs,
 } from '../apollo/types';
-import { saveSession } from './auth';
+import { saveSession, removeSession } from './auth';
 
 const SALT_ROUNDS = 3;
 
@@ -122,4 +122,9 @@ export async function changePassword({
   );
 
   return true && updateQueryResult.rowCount;
+}
+
+export function signOut(res: NextApiResponse) {
+  removeSession(res);
+  return true;
 }

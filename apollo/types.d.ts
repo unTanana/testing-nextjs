@@ -24,6 +24,7 @@ export type Mutation = {
   login: Scalars['Boolean'];
   deleteUser?: Maybe<Scalars['Boolean']>;
   changePassword?: Maybe<Scalars['Boolean']>;
+  signOut: Scalars['Boolean'];
 };
 
 

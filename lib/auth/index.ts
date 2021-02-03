@@ -40,3 +40,12 @@ export const saveSession = (token: string, res: NextApiResponse) => {
 
   res.setHeader('Set-Cookie', cookie);
 };
+
+export function removeSession(res: NextApiResponse) {
+  const cookie = serialize('session', '', {
+    maxAge: -1,
+    path: '/',
+  });
+
+  res.setHeader('Set-Cookie', cookie);
+}

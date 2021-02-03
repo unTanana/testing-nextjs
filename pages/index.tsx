@@ -1,22 +1,17 @@
 import { NextPageContext } from 'next';
 import { getSession } from '../lib/auth';
-import Router from 'next/router';
 import Head from 'next/head';
 
 export async function getServerSideProps(context: NextPageContext) {
+  // this is how you make a page private in next apparently
   const user = getSession(context.req!);
-  console.log('user:', user);
-
   if (!user) {
-    if (context.res) {
-      console.log('redirecting the bastard!');
-      context.res?.writeHead(302, {
-        Location: '/login',
-      });
-      context.res?.end();
-    } else {
-      Router.replace('/login');
-    }
+    return {
+      redirect: {
+        destination: '/login',
+        permanent: false,
+      },
+    };
   }
   return {
     props: {}, // Will be passed to the page component as props
@@ -29,7 +24,7 @@ export default function Home() {
       <Head>
         <title>Le Stock Watcher</title>
       </Head>
-      Le stock Watcher
+      <h1>Le stock Watcher</h1>
     </main>
   );
 }
