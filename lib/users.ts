@@ -2,9 +2,14 @@ import pool from './db';
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import config from './util/config';
-import redisClient, { getAsync } from './redis';
 import jwt from 'jsonwebtoken';
-import { NextApiRequest } from 'next';
+import { NextApiResponse } from 'next';
+import {
+  MutationCreateUserArgs,
+  MutationLoginArgs,
+  MutationChangePasswordArgs,
+} from '../apollo/types';
+import { saveSession } from './auth';
 
 const SALT_ROUNDS = 3;
 
@@ -17,7 +22,10 @@ export async function getAllUsers() {
   return result.rows;
 }
 
-export async function createUser({ username, password }: UserInput) {
+export async function createUser({
+  username,
+  password,
+}: MutationCreateUserArgs) {
   const queryResult = await pool.query(
     `SELECT username from users WHERE username='${username}'`
   );
@@ -45,10 +53,12 @@ export async function createUser({ username, password }: UserInput) {
   return newUserQuery.rows[0];
 }
 
-export async function login({
-  username,
-  password,
-}: UserInput): Promise<LoginDetails> {
+export async function login(
+  { username, password }: MutationLoginArgs,
+  res: NextApiResponse
+): Promise<boolean> {
+  console.log('username:', username);
+  console.log('password:', password);
   const queryResult = await pool.query(
     `SELECT id, password from users WHERE username='${username}'`
   );
@@ -70,20 +80,13 @@ export async function login({
       username,
     },
     config.authSecret,
-    { expiresIn: '30m' }
+    { expiresIn: '7d' }
   );
-  const refreshToken = jwt.sign(
-    {
-      id: user.id,
-      username,
-    },
-    config.refreshSecret
-  );
-  redisClient.set(user.id, refreshToken);
-  return {
-    authToken,
-    refreshToken,
-  };
+
+  // save session
+  saveSession(authToken, res);
+
+  return true;
 }
 
 export async function deleteUser(userId: string) {
@@ -97,7 +100,7 @@ export async function changePassword({
   userId,
   oldPassword,
   newPassword,
-}: ChangePasswordInput) {
+}: MutationChangePasswordArgs) {
   const queryResult = await pool.query(
     `SELECT id, password from users WHERE id='${userId}'`
   );
@@ -119,53 +122,4 @@ export async function changePassword({
   );
 
   return true && updateQueryResult.rowCount;
-}
-
-export async function getNewAuthToken(req: NextApiRequest) {
-  // refresh token is to be passed here
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) {
-    throw new Error('UNAUTHORIZED');
-  }
-  try {
-    // check if it's valid
-    const user = jwt.verify(token, config.refreshSecret);
-    console.log('user:', user);
-    if (!user || !user.id) {
-      throw new Error('UNAUTHORIZED');
-    }
-    // check if it's stored in redis for that user
-    const foundRefreshToken = await getAsync(user.id);
-    console.log('foundRefreshToken:', foundRefreshToken);
-
-    // tokens should match
-    if (token !== foundRefreshToken) {
-      throw new Error('UNAUTHORIZED');
-    }
-
-    return jwt.sign(
-      { id: user.id, username: user.username },
-      config.authSecret,
-      { expiresIn: '30m' }
-    );
-  } catch (e) {
-    console.log('e:', e);
-    throw new Error('UNAUTHORIZED');
-  }
-}
-
-interface ChangePasswordInput {
-  userId: string;
-  oldPassword: string;
-  newPassword: string;
-}
-
-interface UserInput {
-  username: string;
-  password: string;
-}
-
-interface LoginDetails {
-  authToken: string;
-  refreshToken: string;
 }

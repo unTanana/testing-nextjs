@@ -13,32 +13,17 @@ export type Scalars = {
   Float: number;
 };
 
-export type Book = {
-  __typename?: 'Book';
-  name?: Maybe<Scalars['String']>;
-  author?: Maybe<Scalars['String']>;
-};
-
 export type Query = {
   __typename?: 'Query';
-  book?: Maybe<Book>;
   users?: Maybe<Array<Maybe<User>>>;
 };
 
 export type Mutation = {
   __typename?: 'Mutation';
-  updateBook?: Maybe<Book>;
   createUser?: Maybe<User>;
-  login: LoginDetails;
-  refreshToken: Scalars['String'];
+  login: Scalars['Boolean'];
   deleteUser?: Maybe<Scalars['Boolean']>;
   changePassword?: Maybe<Scalars['Boolean']>;
-};
-
-
-export type MutationUpdateBookArgs = {
-  name: Scalars['String'];
-  author: Scalars['String'];
 };
 
 
@@ -69,13 +54,8 @@ export type User = {
   __typename?: 'User';
   id: Scalars['ID'];
   username: Scalars['String'];
+  password?: Maybe<Scalars['String']>;
   description?: Maybe<Scalars['String']>;
-};
-
-export type LoginDetails = {
-  __typename?: 'LoginDetails';
-  authToken: Scalars['String'];
-  refreshToken: Scalars['String'];
 };
 
 

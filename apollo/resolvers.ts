@@ -1,20 +1,13 @@
-let book = {
-  name: 'The Hungarian Sausage',
-  author: 'Ben Grunfeld',
-};
-
 import {
   getAllUsers,
   createUser,
   login,
   deleteUser,
   changePassword,
-  getNewAuthToken,
 } from '../lib/users';
 
 export const resolvers = {
   Query: {
-    book: () => book,
     users: (_root, _args, context) => {
       if (!context.user) {
         throw new Error('UNAUTHORIZED');
@@ -24,35 +17,39 @@ export const resolvers = {
   },
 
   Mutation: {
-    updateBook: (root, args) => {
-      book.name = args.name;
-      book.author = args.author;
-      return book;
-    },
-    createUser: (root, args) => {
+    createUser: (root, args, context) => {
+      if (!context.user) {
+        throw new Error('UNAUTHORIZED');
+      }
       return createUser({
         username: args.username,
         password: args.password,
       });
     },
-    login: (root, args) => {
-      return login({
-        username: args.username,
-        password: args.password,
-      });
+    login: (root, args, context) => {
+      return login(
+        {
+          username: args.username,
+          password: args.password,
+        },
+        context.res
+      );
     },
-    deleteUser: (root, args) => {
+    deleteUser: (root, args, context) => {
+      if (!context.user) {
+        throw new Error('UNAUTHORIZED');
+      }
       return deleteUser(args.userId);
     },
-    changePassword: (root, args) => {
+    changePassword: (root, args, context) => {
+      if (!context.user) {
+        throw new Error('UNAUTHORIZED');
+      }
       return changePassword({
         userId: args.userId,
         oldPassword: args.oldPassword,
         newPassword: args.newPassword,
       });
-    },
-    refreshToken: (_root, _args, context) => {
-      return getNewAuthToken(context.req);
     },
   },
 };
