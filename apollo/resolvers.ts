@@ -19,9 +19,6 @@ export const resolvers = {
 
   Mutation: {
     createUser: (root, args, context) => {
-      if (!context.user) {
-        throw new Error('UNAUTHORIZED');
-      }
       return createUser({
         username: args.username,
         password: args.password,

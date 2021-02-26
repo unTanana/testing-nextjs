@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "migrate": "node -r dotenv/config ./lib/migrations.js dotenv_config_path=./.env.local",
     "generate-types": "graphql-codegen --config codegen.yml"
   },
   "dependencies": {
@@ -16,6 +17,7 @@
     "cookie": "^0.4.1",
     "date-fns": "^2.16.1",
     "deepmerge": "^4.2.2",
+    "dotenv": "^8.2.0",
     "formik": "^2.2.6",
     "graphql": "^15.4.0",
     "gray-matter": "^4.0.2",

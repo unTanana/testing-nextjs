@@ -26,31 +26,37 @@ export async function createUser({
   username,
   password,
 }: MutationCreateUserArgs) {
-  const queryResult = await pool.query(
-    `SELECT username from users WHERE username='${username}'`
-  );
+  try {
+    console.log('username:', username);
+    console.log('password:', password);
+    const queryResult = await pool.query(
+      `SELECT username from users WHERE username='${username}'`
+    );
 
-  console.log('queryResult:', queryResult.rows);
-  if (queryResult.rows.length > 0) {
-    throw new Error('USER_TAKEN');
+    console.log('queryResult:', queryResult.rows);
+    if (queryResult.rows.length > 0) {
+      throw new Error('USER_TAKEN');
+    }
+
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+    console.log('hashedPassword:', hashedPassword);
+    const id = uuidv4();
+    console.log('id:', id);
+
+    const insertQueryResult = await pool.query(
+      `INSERT into users (id, username, password) VALUES ('${id}', '${username}', '${hashedPassword}')`
+    );
+
+    console.log('insertQueryResult:', insertQueryResult);
+    const newUserQuery = await pool.query(
+      `SELECT id, username from users WHERE id='${id}'`
+    );
+
+    console.log('newUserQuery:', newUserQuery.rows);
+    return newUserQuery.rows[0];
+  } catch (e) {
+    console.log('ERROR: ', e);
   }
-
-  const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
-  console.log('hashedPassword:', hashedPassword);
-  const id = uuidv4();
-  console.log('id:', id);
-
-  const insertQueryResult = await pool.query(
-    `INSERT into users (id, username, password) VALUES ('${id}', '${username}', '${hashedPassword}')`
-  );
-
-  console.log('insertQueryResult:', insertQueryResult);
-  const newUserQuery = await pool.query(
-    `SELECT id, username from users WHERE id='${id}'`
-  );
-
-  console.log('newUserQuery:', newUserQuery.rows);
-  return newUserQuery.rows[0];
 }
 
 export async function login(
